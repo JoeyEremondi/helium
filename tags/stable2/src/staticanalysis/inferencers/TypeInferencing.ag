@@ -1,0 +1,68 @@
+-------------------------------------------------------------------------------
+--
+--   *** The Helium Compiler : Static Analysis ***
+--               ( Bastiaan Heeren )
+--
+-- TypeInferencing.ag : The type inferencer for Helium
+--
+-------------------------------------------------------------------------------
+
+ATTR Module
+   [ importEnvironment     : ImportEnvironment
+     strategy              : Strategy
+     useTypeGraph          : Bool
+   |
+   | debugIO               : {IO ()}
+     toplevelTypes         : TypeEnvironment
+     typeErrors            : TypeErrors
+     warnings              : Warnings
+   ]
+
+INCLUDE "TypeInferenceRules.ag"
+INCLUDE "TypeInferenceInfo.ag"
+INCLUDE "../staticchecks/HeliumPartialSyntax.ag"
+INCLUDE "../../syntax/UHA_OneLine.ag"
+INCLUDE "../../syntax/UHA_Syntax.ag"
+
+imports {
+
+-- standard
+import Monad                   ( when )
+import List                    ( intersperse, partition, nub, zipWith4, union )
+-- types
+import Types
+import TypeConversion
+-- constraints
+import Constraints
+import LiftedConstraints
+import ConstraintTree
+import Strategy
+-- messages
+import Messages
+import TypeErrors
+import Warnings
+-- solvers
+import SolveConstraints 
+import SolveEquivalenceGroups  ( solveEquivalenceGroups )
+import SolveGreedy             ( solveGreedy )
+import ConstraintInfo
+import TypeGraphConstraintInfo
+import EquivalenceGroupsImplementation ( )
+import HeliumConstraintInfo
+-- other
+import TopSort                 ( topSort )
+import Utils                   ( internalError )
+import DerivingShow            ( typeOfShowFunction, nameOfShowFunction ) 
+import UHA_Range               ( noRange, getNameRange, getExprRange, getPatRange, getLitRange )
+import UHA_Syntax
+import UHA_Utils               ( showNameAsOperator )
+import ImportEnvironment
+import FiniteMap
+}
+
+--- The following lines enable Type Strategies. 
+
+INCLUDE "typingstrategies/TS_PatternMatching.ag"
+
+SEM Module
+  | Module  lhs . debugIO = @debugIO >> putStrLn "Inference Strategies:" >> @body.matchIO
