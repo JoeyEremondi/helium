@@ -1,0 +1,15 @@
+Char is up to date
+Compiling typeerrors/Heuristics/OrdChr.hs
+(3,9): Type error in variable
+ expression       : ord
+   type           : Char -> Int
+   expected type  : Int  -> a  
+ probable fix     : use chr instead
+
+(3,17): Type error in variable
+ expression       : chr
+   type           : Int  -> Char
+   expected type  : Char -> a   
+ probable fix     : use ord instead
+
+Compilation failed with 2 errors

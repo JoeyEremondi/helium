@@ -1,0 +1,8 @@
+Compiling typeerrors/Examples/StatVarBind.hs
+(4,27): Type error in else branch of conditional
+ expression       : if x then m else x
+ term             : x
+   type           : Bool   
+   does not match : IO Bool
+
+Compilation failed with 1 error

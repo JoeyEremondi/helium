@@ -1,0 +1,112 @@
+{-| Module      :  ListOfHeuristics
+    License     :  GPL
+
+    Maintainer  :  helium@cs.uu.nl
+    Stability   :  experimental
+    Portability :  portable
+    
+    A list of all type graph heuristics that is used.
+-}
+
+module ListOfHeuristics (listOfHeuristics) where
+
+import Args (Option(..))
+import ConstraintInfo
+import HeuristicsInfo () -- instances
+import Top.Types
+import Top.TypeGraph.Heuristics
+import Top.TypeGraph.DefaultHeuristics
+import RepairHeuristics
+import UnifierHeuristics
+import OnlyResultHeuristics
+import TieBreakerHeuristics
+
+-- temporary
+import Top.TypeGraph.TypeGraphState
+import Top.TypeGraph.Paths
+import Data.Maybe
+import Top.TypeGraph.Basics
+
+listOfHeuristics :: [Option] -> Siblings -> Path (EdgeId, ConstraintInfo) -> [Heuristic ConstraintInfo]
+listOfHeuristics options siblings path =
+   let is = [ makeEdgeNr i | SelectConstraintNumber i <- options ]
+   in [ selectConstraintNumbers is | not (null is) ]
+   ++
+   [ highlyTrustedFilter
+   , highParticipation 0.95 path
+   , phaseFilter
+   ] ++
+   [ Heuristic (Voting (
+        [ siblingFunctions siblings
+        , similarLiterals
+        , applicationEdge
+        , tupleEdge
+        , fbHasTooManyArguments
+        , variableFunction
+        , constraintFromUser path
+        , unaryMinus (Overloading `elem` options)
+        ] ++
+        [ similarNegation | Overloading `notElem` options ] ++
+        [ unifierVertex   | UnifierHeuristics `elem` options ]))
+   | NoRepairHeuristics `notElem` options
+   ] ++
+   [ inPredicatePath | Overloading `elem` options ] ++
+   [ applicationResult
+   , negationResult
+   -- , typeVariableInvolved {- I am not convinced yet. Bastiaan -}
+   , trustFactorOfConstraint
+   , isTopDownEdge
+   , positionInList
+   ]
+
+-- Never report a constraint which is highly trusted
+-- (even if this means that you have to report multiple errors)
+-- This should be the first heuristic that is applied 
+highlyTrustedFilter :: Heuristic ConstraintInfo
+highlyTrustedFilter = Heuristic (
+   let f (_, info) = return (not (isHighlyTrusted info))
+   in edgeFilter "Not highly trusted" f)
+
+-- two more heuristics for the Type Inference Directives
+-- (move to another module?)
+phaseFilter :: Heuristic ConstraintInfo
+phaseFilter = Heuristic (
+   let f (_, info) = return (phaseOfConstraint info)
+   in maximalEdgeFilter "Highest phase number" f)
+
+constraintFromUser :: HasTypeGraph m ConstraintInfo => Path (EdgeId, ConstraintInfo) -> Selector m ConstraintInfo
+constraintFromUser path = 
+   SelectorList ("Constraints from .type file", helper path)
+
+ where
+   helper path edges = 
+      let
+          bestEdge = rec path
+          edgeNrs  = [ i | (EdgeId _ _ i, _) <- edges ]
+ 
+          rec path =
+             case path of
+                x :|: y -> f min (rec x) (rec y)
+                x :+: y -> f max (rec x) (rec y)
+                Step (EdgeId _ _ cNR, info) |  isJust (maybeUserConstraint info) && cNR `elem` edgeNrs 
+                        -> Just cNR
+                _       -> Nothing
+	 
+          f :: (a -> a -> a) -> Maybe a -> Maybe a -> Maybe a	    
+          f g ma mb = 
+             case (ma, mb) of
+                (Just a, Just b) -> Just (g a b)
+                (Nothing, _    ) -> mb
+                _                -> ma
+      in 
+         case [ tuple | tuple@(EdgeId _ _ cNR, _) <- edges, Just cNR == bestEdge ] of
+            [] -> return Nothing
+            (edgeID, info):_ -> 
+	       let (groupID, number) = maybe (0, 0) id (maybeUserConstraint info)
+	           otherEdges = let p info =
+		                       case maybeUserConstraint info of
+				          Just (a, b) -> a == groupID && b > number
+					  Nothing     -> False
+		                in [ e | (e, i) <- edges, p i ] -- perhaps over all edges!
+	       in return . Just $
+	             (8, "constraints from .type file", edgeID:otherEdges, info)

@@ -1,0 +1,4 @@
+Compiling thompson/Thompson30.hs
+(2,13): Undefined variable "ord"
+  Hint: Did you mean "odd" or "or" ?
+Compilation failed with 1 error

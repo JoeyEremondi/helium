@@ -1,0 +1,4 @@
+Compiling parser/DerivingMany.hs
+(3,24): Cannot derive class "Num"
+  Hint: Only Show and Eq instances can be derived
+Compilation failed with 1 error
