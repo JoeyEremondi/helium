@@ -1,0 +1,646 @@
+module PreludePrim
+    ( 
+    -- Conversion
+      ord, chr, intToFloat, ceiling, floor, truncate, round
+    
+    -- Num
+    , (+), (-), (*), negate, fromInt
+    
+    -- Eq
+    , (==), (/=)
+    
+    -- Ord
+    , (<), (>), (<=), (>=), compare
+
+    -- Show
+    , show
+    
+    -- Int
+    , div, mod, quot, rem
+    
+    -- Float
+    , (/)
+    , sqrt, (**.), exp, log, sin, cos, tan
+        
+    -- IO
+    , return -- primUnsafePerformIO, primBindIO in HeliumLang
+    , getChar
+    
+    -- strictness
+    , ($!), seq
+    
+    -- misc
+    , error, catch
+    
+    , dictShowInt, dictShowFloat, dictShowChar, dictShowBool, ''dictShow[]''
+    , ''dictShow()'', ''dictShow(,)'', ''dictShow(,,)'', ''dictShow(,,,)'', ''dictShow(,,,,)'', ''dictShow(,,,,,)''
+    , ''dictShow(,,,,,,)'', ''dictShow(,,,,,,,)'', ''dictShow(,,,,,,,,)'', ''dictShow(,,,,,,,,,)''
+    
+    , dictEqInt, dictEqFloat, dictEqChar, dictEqBool, ''dictEq[]''
+    , ''dictEq()'', ''dictEq(,)'', ''dictEq(,,)'', ''dictEq(,,,)'', ''dictEq(,,,,)'', ''dictEq(,,,,,)''
+    , ''dictEq(,,,,,,)'', ''dictEq(,,,,,,,)'', ''dictEq(,,,,,,,,)'', ''dictEq(,,,,,,,,,)''
+    
+    , dictNumInt, dictNumFloat
+    
+    , dictOrdInt, dictOrdFloat, dictOrdChar, dictOrdBool, ''dictOrd[]''
+    , ''dictOrd()'', ''dictOrd(,)'', ''dictOrd(,,)'', ''dictOrd(,,,)'', ''dictOrd(,,,,)'', ''dictOrd(,,,,,)''
+    , ''dictOrd(,,,,,,)'', ''dictOrd(,,,,,,,)'', ''dictOrd(,,,,,,,,)'', ''dictOrd(,,,,,,,,,)''
+    , Ordering(EQ, LT, GT), showOrdering
+    
+    , getEqFromOrd, getEqFromNum, getShowFromNum
+    
+    ) where
+
+import HeliumLang
+    ( showFloat, showInt, showBool, showChar, showList, showUnit
+    , showTuple2, showTuple3, showTuple4, showTuple5, showTuple6, showTuple7
+    , showTuple8, showTuple9, showTuple10
+    )
+
+import LvmLang
+    ( (+#) = (+), (*#) = (*), (-#) = (-), negInt
+    , (==#) = (==), (/=#) = (/=)
+    , (<#) = (<), (<=#) = (<=), (>=#) = (>=), (>#) = (>)
+    , mod = (%), quot, rem, div = (/)
+    
+    , (+.), (*.), (-.), (/) = (/.), negFloat
+    , (==.), (/=.)
+    , (<.), (<=.), (>=.), (>.)
+    
+    , primPackedToString = stringFromPacked
+
+    , Int(), Float(), IO()
+    , custom "typedecl" String
+    , Bool(True, False)
+    , '':[]''('':[]'', (:))
+    , '':()''('':()'')
+    , primBindIO = bindIO, primReturnIO = returnIO
+    , primPackedToString = stringFromPacked
+    , primUnsafePerformIO = unsafePerformIO
+    
+    , return = returnIO
+    , ($!), seq
+    , True -- hack
+    )
+
+import LvmIO(stdin, inputChar)
+import LvmException(error, errorPacked {- hack -}, catch )
+
+custom infix (+)  : public [6,"left"]
+custom infix (-)  : public [6,"left"]
+custom infix (*)  : public [7,"left"]
+custom infix div  : public [7,"left"]
+custom infix mod  : public [7,"left"]
+custom infix quot : public [7,"left"]
+custom infix rem  : public [7,"left"]
+
+custom infix (==) : public [4,"none"]
+custom infix (/=) : public [4,"none"]
+custom infix (<)  : public [4,"none"]
+custom infix (>)  : public [4,"none"]
+custom infix (<=) : public [4,"none"]
+custom infix (>=) : public [4,"none"]
+
+custom infix (/)  : public [7,"left"]
+
+custom infix (**.) : public [8,"right"]
+custom infix ($!)  : public [0,"right"]
+
+ord :: Char -> Int
+ord x = x
+
+chr :: Int -> Char
+chr x = x
+
+getChar :: IO Char
+getChar = inputChar stdin
+
+-- Float
+
+extern primFloatSqrt "fp_sqrt" :: "FF"
+extern float_of_string_extern "float_of_string" :: "Fz"
+
+sqrt :: Float -> Float
+sqrt x = let! x = x 
+              y = float_of_string_extern "0.0"
+         in
+            case (>=) dictOrdFloat x y of
+            {   True -> primFloatSqrt x
+            ;   _    -> errorPacked "Can't apply sqrt to negative floating-point number"
+            }
+
+extern primFloatPower "fp_pow" :: "FFF"
+
+(**.) :: Float -> Float -> Float
+(**.) x y = let! x = x in let! y = y in primFloatPower x y
+
+extern primFloatExp "fp_exp" :: "FF"
+
+exp :: Float -> Float
+exp x = let! x = x in primFloatExp x
+
+extern primFloatLog "fp_log" :: "FF"
+
+log :: Float -> Float
+log x = let! x = x in primFloatLog x
+
+extern primFloatSin "fp_sin" :: "FF"
+
+sin :: Float -> Float
+sin x = let! x = x in primFloatSin x
+
+extern primFloatCos "fp_cos" :: "FF"
+
+cos :: Float -> Float
+cos x = let! x = x in primFloatCos x
+
+extern primFloatTan "fp_tan" :: "FF"
+
+tan :: Float -> Float
+tan x = let! x = x in primFloatTan x
+
+extern primIntToFloat "float_of_int" :: "FI"
+
+intToFloat :: Int -> Float
+intToFloat x = let! x = x in primIntToFloat x
+
+extern primFloatCeil "fp_ceil" :: "FF"
+
+ceiling :: Float -> Int
+ceiling x = let! x = x 
+                 y = primFloatCeil x
+            in primFloatTruncateInt y
+
+extern primFloatFloor "fp_floor" :: "FF"
+
+floor :: Float -> Int
+floor x = let! x = x 
+               y = primFloatFloor x
+          in primFloatTruncateInt y
+
+extern primFloatTruncateInt "fp_trunc_int" :: "IF"
+
+truncate :: Float -> Int
+truncate x = let! x = x in primFloatTruncateInt x
+
+extern primFloatNear     "fp_near"      :: "FF"
+extern primFloatRoundInt "fp_round_int" :: "IF"
+
+round :: Float -> Int
+round x 
+    = let! y = x
+           z = primFloatNear     y
+           i = primFloatRoundInt z
+      in i
+
+
+
+
+
+
+
+-- Overloading
+
+{- Show -}
+
+dictShowInt :: "DictShowInt"
+dictShowInt    = (@0, 1) showInt
+
+dictShowFloat :: "DictShowFloat"
+dictShowFloat  = (@0, 1) showFloat
+
+dictShowBool :: "DictShowBool"
+dictShowBool   = (@0, 1) showBool
+
+dictShowChar :: "DictShowChar"
+dictShowChar   = (@0, 1) showChar
+
+''dictShow[]'' :: "DictShowList"
+''dictShow[]'' dict = (@0, 1) (\xs -> showList (show dict) xs)
+
+''dictShow()'' :: "DictShowTuple0"
+''dictShow()'' = (@0, 1) showUnit
+
+''dictShow(,)'' :: "DictShowTuple2"
+''dictShow(,)'' d1 d2 = (@0, 1) (\t ->
+    showTuple2  (show d1) (show d2) t)
+
+''dictShow(,,)'' :: "DictShowTuple3"
+''dictShow(,,)'' d1 d2 d3 = (@0, 1) (\t ->
+    showTuple3  (show d1) (show d2) (show d3) t)
+
+''dictShow(,,,)'' :: "DictShowTuple4"
+''dictShow(,,,)'' d1 d2 d3 d4 = (@0, 1) (\t ->
+    showTuple4  (show d1) (show d2) (show d3) (show d4) t)
+
+''dictShow(,,,,)'' :: "DictShowTuple5"
+''dictShow(,,,,)'' d1 d2 d3 d4 d5 = (@0, 1) (\t ->
+    showTuple5  (show d1) (show d2) (show d3) (show d4) (show d5) t)
+
+''dictShow(,,,,,)'' :: "DictShowTuple6"
+''dictShow(,,,,,)'' d1 d2 d3 d4 d5 d6 = (@0, 1) (\t ->
+    showTuple6  (show d1) (show d2) (show d3) (show d4) (show d5) 
+                (show d6) t)
+
+''dictShow(,,,,,,)'' :: "DictShowTuple7"
+''dictShow(,,,,,,)'' d1 d2 d3 d4 d5 d6 d7 = (@0, 1) (\t ->
+    showTuple7  (show d1) (show d2) (show d3) (show d4) (show d5) 
+                (show d6) (show d7) t)
+
+''dictShow(,,,,,,,)'' :: "DictShowTuple8"
+''dictShow(,,,,,,,)'' d1 d2 d3 d4 d5 d6 d7 d8 = (@0, 1) (\t ->
+    showTuple8  (show d1) (show d2) (show d3) (show d4) (show d5) 
+                (show d6) (show d7) (show d8) t)
+
+''dictShow(,,,,,,,,)'' :: "DictShowTuple9"
+''dictShow(,,,,,,,,)'' d1 d2 d3 d4 d5 d6 d7 d8 d9 = (@0, 1) (\t ->
+    showTuple9  (show d1) (show d2) (show d3) (show d4) (show d5) 
+                (show d6) (show d7) (show d8) (show d9) t)
+
+''dictShow(,,,,,,,,,)'' :: "DictShowTuple10"
+''dictShow(,,,,,,,,,)'' d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 = (@0, 1) (\t ->
+    showTuple10 (show d1) (show d2) (show d3) (show d4) (show d5) 
+                (show d6) (show d7) (show d8) (show d9) (show d10) t)
+        
+show :: "Show a => a -> String"
+show dShow = 
+    case dShow of
+        (@0, 1) x1 -> x1
+        
+{- Num -}
+
+dictNumInt :: "DictNumInt"
+dictNumInt   = (@0, 7) dictEqInt   dictShowInt   (+#) (*#) (-#) negInt   id
+
+dictNumFloat :: "DictNumFloat"
+dictNumFloat = (@0, 7) dictEqFloat dictShowFloat (+.) (*.) (-.) negFloat intToFloat {- fromInt -}
+
+id x = x
+
+getEqFromNum :: "GetEqFromNum"
+getEqFromNum dNum = 
+    case dNum of
+            (@0, 7) x1 x2 x3 x4 x5 x6 x7 -> x1
+            
+getShowFromNum :: "GetShowFromNum"
+getShowFromNum dNum = 
+    case dNum of
+            (@0, 7) x1 x2 x3 x4 x5 x6 x7 -> x2
+
+(+) :: "Num a => a -> a -> a"
+(+) dNum = 
+    case dNum of
+            (@0, 7) x1 x2 x3 x4 x5 x6 x7 -> x3
+
+(*) :: "Num a => a -> a -> a"
+(*) dNum = 
+    case dNum of
+            (@0, 7) x1 x2 x3 x4 x5 x6 x7 -> x4
+
+(-) :: "Num a => a -> a -> a"
+(-) dNum = 
+    case dNum of
+            (@0, 7) x1 x2 x3 x4 x5 x6 x7 -> x5
+
+negate :: "Num a => a -> a"
+negate dNum = 
+    case dNum of
+            (@0, 7) x1 x2 x3 x4 x5 x6 x7 -> x6
+
+fromInt :: "Num a => Int -> a"
+fromInt dNum = 
+    case dNum of
+            (@0, 7) x1 x2 x3 x4 x5 x6 x7 -> x7
+
+
+
+{- Eq -}
+
+dictEqInt :: "DictEqInt"
+dictEqInt    = (==#)
+
+dictEqFloat :: "DictEqFloat"
+dictEqFloat  = (==.)
+
+dictEqBool :: "DictEqBool"
+dictEqBool   = eqBool
+
+''dictEq[]'' :: "DictEqList"
+''dictEq[]'' dict = eqList dict
+
+dictEqChar :: "DictEqChar"
+dictEqChar   = dictEqInt
+
+''dictEq()'' :: "DictEqTuple0"
+''dictEq()'' = \x y -> 
+    case x of { '':()'' -> case y of { '':()'' -> True } }
+
+''dictEq(,)'' :: "DictEqTuple2"
+''dictEq(,)'' d1 d2 = \x y -> 
+    case x of { (@0, 2) x1 x2 -> case y of { (@0, 2) y1 y2 ->
+        allTrue [ (==) d1 x1 y1, (==) d2 x2 y2 ] } }
+
+''dictEq(,,)'' :: "DictEqTuple3"
+''dictEq(,,)'' d1 d2 d3 = \x y -> 
+    case x of { (@0, 3) x1 x2 x3 -> 
+        case y of { (@0, 3) y1 y2 y3 ->
+            allTrue [ (==) d1 x1 y1, (==) d2 x2 y2, (==) d3 x3 y3 ] } }
+
+''dictEq(,,,)'' :: "DictEqTuple4"
+''dictEq(,,,)'' d1 d2 d3 d4 = \x y -> 
+    case x of { (@0, 4) x1 x2 x3 x4 -> 
+        case y of { (@0, 4) y1 y2 y3 y4 ->
+            allTrue [ (==) d1 x1 y1, (==) d2 x2 y2, (==) d3 x3 y3, (==) d4 x4 y4 ] } }
+
+''dictEq(,,,,)'' :: "DictEqTuple5"
+''dictEq(,,,,)'' d1 d2 d3 d4 d5 = \x y -> 
+    case x of { (@0, 5) x1 x2 x3 x4 x5 -> 
+        case y of { (@0, 5) y1 y2 y3 y4 y5 ->
+            allTrue [ (==) d1 x1 y1, (==) d2 x2 y2, (==) d3 x3 y3, (==) d4 x4 y4
+                    , (==) d5 x5 y5 ] } }
+
+''dictEq(,,,,,)'' :: "DictEqTuple6"
+''dictEq(,,,,,)'' d1 d2 d3 d4 d5 d6 = \x y -> 
+    case x of { (@0, 6) x1 x2 x3 x4 x5 x6 -> 
+        case y of { (@0, 6) y1 y2 y3 y4 y5 y6 ->
+            allTrue [ (==) d1 x1 y1, (==) d2 x2 y2, (==) d3 x3 y3, (==) d4 x4 y4
+                    , (==) d5 x5 y5, (==) d6 x6 y6 ] } }
+
+''dictEq(,,,,,,)'' :: "DictEqTuple7"
+''dictEq(,,,,,,)'' d1 d2 d3 d4 d5 d6 d7 = \x y -> 
+    case x of { (@0, 7) x1 x2 x3 x4 x5 x6 x7 -> 
+        case y of { (@0, 7) y1 y2 y3 y4 y5 y6 y7 ->
+            allTrue [ (==) d1 x1 y1, (==) d2 x2 y2, (==) d3 x3 y3, (==) d4 x4 y4
+                    , (==) d5 x5 y5, (==) d6 x6 y6, (==) d7 x7 y7 ] } }
+
+''dictEq(,,,,,,,)'' :: "DictEqTuple8"
+''dictEq(,,,,,,,)'' d1 d2 d3 d4 d5 d6 d7 d8 = \x y -> 
+    case x of { (@0, 8) x1 x2 x3 x4 x5 x6 x7 x8 -> 
+        case y of { (@0, 8) y1 y2 y3 y4 y5 y6 y7 y8 ->
+            allTrue [ (==) d1 x1 y1, (==) d2 x2 y2, (==) d3 x3 y3, (==) d4 x4 y4
+                    , (==) d5 x5 y5, (==) d6 x6 y6, (==) d7 x7 y7, (==) d8 x8 y8
+                    ] } }
+
+''dictEq(,,,,,,,,)'' :: "DictEqTuple9"
+''dictEq(,,,,,,,,)'' d1 d2 d3 d4 d5 d6 d7 d8 d9 = \x y -> 
+    case x of { (@0, 9) x1 x2 x3 x4 x5 x6 x7 x8 x9 -> 
+        case y of { (@0, 9) y1 y2 y3 y4 y5 y6 y7 y8 y9 ->
+            allTrue [ (==) d1 x1 y1, (==) d2 x2 y2, (==) d3 x3 y3, (==) d4 x4 y4
+                    , (==) d5 x5 y5, (==) d6 x6 y6, (==) d7 x7 y7, (==) d8 x8 y8
+                    , (==) d9 x9 y9 ] } }
+
+''dictEq(,,,,,,,,,)'' :: "DictEqTuple10"
+''dictEq(,,,,,,,,,)'' d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 = \x y -> 
+    case x of { (@0, 10) x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 -> 
+        case y of { (@0, 10) y1 y2 y3 y4 y5 y6 y7 y8 y9 y10 ->
+            allTrue [ (==) d1 x1 y1, (==) d2 x2 y2, (==) d3 x3 y3, (==) d4 x4 y4
+                    , (==) d5 x5 y5, (==) d6 x6 y6, (==) d7 x7 y7, (==) d8 x8 y8
+                    , (==) d9 x9 y9, (==) d10 x10 y10 ] } }
+
+allTrue xs =
+    case xs of
+        [] -> True
+        (:) b bs -> case b of False -> False
+                              _     -> allTrue bs
+
+
+(==) :: "Eq a => a -> a -> Bool"
+(==) dEq = dEq
+        
+(/=) :: "Eq a => a -> a -> Bool"
+(/=) dEq = \x y -> not (dEq x y)
+
+eqBool x y = 
+    case x of
+        True -> y
+        False -> not y
+
+eqList dictEqElem xs ys = 
+    case xs of 
+        (:) xh xt -> 
+            case ys of 
+                (:) yh yt ->
+                    case (==) dictEqElem xh yh of
+                        True -> eqList dictEqElem xt yt
+                        False -> False
+                _ -> False
+        _ -> case ys of
+                [] -> True
+                _  -> False
+                    
+not :: Bool -> Bool
+not x = case x of True -> False
+                  False -> True
+            
+{- Ord -}
+
+dictOrdInt :: "DictOrdInt"
+dictOrdInt   = (@0, 2) dictEqInt   compareInt
+
+
+dictOrdFloat :: "DictOrdFloat"
+dictOrdFloat = (@0, 2) dictEqFloat compareFloat
+
+dictOrdChar  :: "DictOrdChar"
+dictOrdChar  = dictOrdInt
+
+dictOrdBool  :: "DictOrdBool"
+dictOrdBool  = (@0, 2) dictEqBool compareBool
+
+''dictOrd[]'' :: "DictOrdList"
+''dictOrd[]'' dict = (@0, 2) ''dictEq[]'' (compareList dict)
+
+''dictOrd()'' :: "DictOrdTuple0"
+''dictOrd()'' = 
+    (@0, 2) ''dictEq()'' 
+        (\x y -> 
+        case x of { '':()'' -> 
+            case y of { '':()'' ->
+                EQ } } )
+
+''dictOrd(,)'' :: "DictOrdTuple2"
+''dictOrd(,)'' d1 d2 = 
+    (@0, 2) ''dictEq(,)'' 
+        (\x y -> 
+        case x of { (@0, 2) x1 x2 -> 
+            case y of { (@0, 2) y1 y2 ->
+                lexico  [ compare d1 x1 y1, compare d2 x2 y2 ] } } )
+
+''dictOrd(,,)'' :: "DictOrdTuple3"
+''dictOrd(,,)'' d1 d2 d3 = 
+    (@0, 2) ''dictEq(,,)'' 
+        (\x y -> 
+        case x of { (@0, 3) x1 x2 x3 -> 
+            case y of { (@0, 3) y1 y2 y3 ->
+                lexico  [ compare d1 x1 y1, compare d2 x2 y2, compare d3 x3 y3 ] } } )
+
+''dictOrd(,,,)'' :: "DictOrdTuple4"
+''dictOrd(,,,)'' d1 d2 d3 d4 = 
+    (@0, 2) ''dictEq(,,,)'' 
+        (\x y -> 
+        case x of { (@0, 4) x1 x2 x3 x4 -> 
+            case y of { (@0, 4) y1 y2 y3 y4 ->
+                lexico  [ compare d1 x1 y1, compare d2 x2 y2, compare d3 x3 y3, compare d4 x4 y4
+                        ] } } )
+
+''dictOrd(,,,,)'' :: "DictOrdTuple5"
+''dictOrd(,,,,)'' d1 d2 d3 d4 d5 = 
+    (@0, 2) ''dictEq(,,,,)'' 
+        (\x y -> 
+        case x of { (@0, 5) x1 x2 x3 x4 x5 -> 
+            case y of { (@0, 5) y1 y2 y3 y4 y5 ->
+                lexico  [ compare d1 x1 y1, compare d2 x2 y2, compare d3 x3 y3, compare d4 x4 y4
+                        , compare d5 x5 y5 ] } } )
+
+''dictOrd(,,,,,)'' :: "DictOrdTuple6"
+''dictOrd(,,,,,)'' d1 d2 d3 d4 d5 d6 = 
+    (@0, 2) ''dictEq(,,,,,)'' 
+        (\x y -> 
+        case x of { (@0, 6) x1 x2 x3 x4 x5 x6 -> 
+            case y of { (@0, 6) y1 y2 y3 y4 y5 y6 ->
+                lexico  [ compare d1 x1 y1, compare d2 x2 y2, compare d3 x3 y3, compare d4 x4 y4
+                        , compare d5 x5 y5, compare d6 x6 y6 ] } } )
+                        
+''dictOrd(,,,,,,)'' :: "DictOrdTuple7"
+''dictOrd(,,,,,,)'' d1 d2 d3 d4 d5 d6 d7 = 
+    (@0, 2) ''dictEq(,,,,,,)'' 
+        (\x y -> 
+        case x of { (@0, 7) x1 x2 x3 x4 x5 x6 x7 -> 
+            case y of { (@0, 7) y1 y2 y3 y4 y5 y6 y7 ->
+                lexico  [ compare d1 x1 y1, compare d2 x2 y2, compare d3 x3 y3, compare d4 x4 y4
+                        , compare d5 x5 y5, compare d6 x6 y6, compare d7 x7 y7 ] } } )
+
+''dictOrd(,,,,,,,)'' :: "DictOrdTuple8"
+''dictOrd(,,,,,,,)'' d1 d2 d3 d4 d5 d6 d7 d8 = 
+    (@0, 2) ''dictEq(,,,,,,,)'' 
+        (\x y -> 
+        case x of { (@0, 8) x1 x2 x3 x4 x5 x6 x7 x8 -> 
+            case y of { (@0, 8) y1 y2 y3 y4 y5 y6 y7 y8 ->
+                lexico  [ compare d1 x1 y1, compare d2 x2 y2, compare d3 x3 y3, compare d4 x4 y4
+                        , compare d5 x5 y5, compare d6 x6 y6, compare d7 x7 y7, compare d8 x8 y8
+                        ] } } )
+
+''dictOrd(,,,,,,,,)'' :: "DictOrdTuple9"
+''dictOrd(,,,,,,,,)'' d1 d2 d3 d4 d5 d6 d7 d8 d9 = 
+    (@0, 2) ''dictEq(,,,,,,,,)'' 
+        (\x y -> 
+        case x of { (@0, 9) x1 x2 x3 x4 x5 x6 x7 x8 x9  -> 
+            case y of { (@0, 9) y1 y2 y3 y4 y5 y6 y7 y8 y9 ->
+                lexico  [ compare d1 x1 y1, compare d2 x2 y2, compare d3 x3 y3, compare d4 x4 y4
+                        , compare d5 x5 y5, compare d6 x6 y6, compare d7 x7 y7, compare d8 x8 y8
+                        , compare d9 x9 y9 ] } } )
+
+''dictOrd(,,,,,,,,,)'' :: "DictOrdTuple10"
+''dictOrd(,,,,,,,,,)'' d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 = 
+    (@0, 2) ''dictEq(,,,,,,,,,)'' 
+        (\x y -> 
+        case x of { (@0, 10) x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 -> 
+            case y of { (@0, 10) y1 y2 y3 y4 y5 y6 y7 y8 y9 y10 ->
+                lexico  [ compare d1 x1 y1, compare d2 x2 y2, compare d3 x3 y3, compare d4 x4 y4
+                        , compare d5 x5 y5, compare d6 x6 y6, compare d7 x7 y7, compare d8 x8 y8
+                        , compare d9 x9 y9, compare d10 x10 y10 ] } } )
+
+lexico xs = 
+    case xs of
+        [] -> EQ
+        (:) o os -> 
+            case o of
+                EQ -> lexico os
+                _  -> o
+
+getEqFromOrd :: "GetEqFromOrd"
+getEqFromOrd dOrd = 
+    case dOrd of
+        (@0, 2) eq cmp -> eq
+        
+(<) :: "Ord a => a -> a -> Bool"
+(<) dOrd x y = 
+    case dOrd of
+        (@0, 2) eq cmp -> 
+            case cmp x y of
+                LT -> True
+                _  -> False
+
+(<=) :: "Ord a => a -> a -> Bool"
+(<=) dOrd x y = 
+    case dOrd of
+        (@0, 2) eq cmp -> 
+            case cmp x y of
+                GT -> False
+                _  -> True
+
+(>=) :: "Ord a => a -> a -> Bool"
+(>=) dOrd x y = 
+    case dOrd of
+        (@0, 2) eq cmp -> 
+            case cmp x y of
+                LT -> False
+                _  -> True
+
+(>) :: "Ord a => a -> a -> Bool"
+(>) dOrd x y = 
+    case dOrd of
+        (@0, 2) eq cmp -> 
+            case cmp x y of
+                GT -> True
+                _  -> False
+
+compare :: "Ord a => a -> a -> Ordering"
+compare dOrd =
+    case dOrd of
+        (@0, 2) eq cmp -> cmp
+               
+
+compareInt x y = 
+    case (<#) x y of
+        True -> LT
+        _    -> case (==#) x y of
+                    True -> EQ
+                    _    -> GT
+
+compareFloat x y = 
+    case (<.) x y of
+        True -> LT
+        _    -> case (==.) x y of
+                    True -> EQ
+                    _    -> GT
+                    
+compareBool x y =
+    case x of 
+        True -> case y of True -> EQ
+                          _    -> GT
+        _    -> case y of True -> LT
+                          _    -> EQ
+                          
+data Ordering = LT | EQ | GT 
+
+showOrdering :: Ordering -> String
+showOrdering x = 
+    case x of
+        LT -> primPackedToString "LT"
+        EQ -> primPackedToString "EQ"
+        GT -> primPackedToString "GT"
+
+compareList dictElem xs ys =
+    case xs of
+        [] -> 
+            case ys of
+                (:) yh yt -> LT
+                _         -> EQ
+        (:) xh xt ->
+            case ys of
+                [] -> GT
+                (:) yh yt ->
+                    case compare dictElem xh yh of
+                        GT -> GT
+                        LT -> LT
+                        EQ -> compareList dictElem xt yt
+
+{- misc -}
+
+primAppend :: [a] -> [a] -> [a] -- is '++'
+primAppend xs ys =
+    case xs of 
+    {   '':[]'' -> ys
+    ;   (:) z zs -> (:) z (primAppend zs ys)
+    }
