@@ -1,0 +1,7 @@
+Compiling thompson/Thompson23.hs
+(1,1): Declared type is too general
+ expression       : empty
+   declared type  :         [a] -> Bool
+   inferred type  : Eq b => [b] -> Bool
+
+Compilation failed with 1 error

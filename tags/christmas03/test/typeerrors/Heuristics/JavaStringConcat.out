@@ -1,0 +1,9 @@
+Compiling typeerrors/Heuristics/JavaStringConcat.hs
+(3,14): Type error in overloaded function
+ function         : +
+   type           : Num a => a      -> a      -> a     
+   used as        :          String -> String -> String
+ problem          : String is not an instance of class Num
+  hint: valid instances of Num are Int and Float
+
+Compilation failed with 1 error
