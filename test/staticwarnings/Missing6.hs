@@ -1,3 +1,0 @@
-
-main :: String -> ()
-main "hello" = ()

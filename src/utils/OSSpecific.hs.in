@@ -1,6 +1,0 @@
-module OSSpecific where
-
-slash :: Char
-slash =  '@SLASH@'
-
-

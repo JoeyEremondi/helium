@@ -1,5 +1,0 @@
-Compiling staticwarnings/Missing8.hs
-(3,10): Warning: Missing pattern in case expression: 
-  False -> ...
-Compilation successful with 1 warning
-<<function>>

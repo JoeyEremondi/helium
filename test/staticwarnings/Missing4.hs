@@ -1,3 +1,0 @@
-
-main :: [Bool] -> ()
-main [True] = ()

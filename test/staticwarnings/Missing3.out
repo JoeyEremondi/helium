@@ -1,5 +1,0 @@
-Compiling staticwarnings/Missing3.hs
-(3,1): Warning: Missing pattern in function bindings: 
-  main _ = ...
-Compilation successful with 1 warning
-<<function>>

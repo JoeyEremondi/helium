@@ -1,6 +1,0 @@
-Compiling staticwarnings/Missing6.hs
-(3,1): Warning: Missing patterns in function bindings: 
-  main (_ : _) = ...
-  main [] = ...
-Compilation successful with 1 warning
-<<function>>
