@@ -1,0 +1,44 @@
+HELIUM
+- show van een String geeft lijst van characters
+- type Double = Float in Prelude??
+- import and export lists zijn niet moeilijk als het gaat om functienamen.
+     Types niet im/exporteren is wel een probleem vanwege dictionaries en show functies
+- show functies mag je niet verbergen (import hiding) maar dit levert nu geen foutmelding op
+- Hudak & Bird doorlopen
+- warning bij Let, Where (undefined constructor, hint: did you mean the keyword...?)
+- --version vlag (aanroepen bij start van Hint)
+- Internationalisatie (Beginnetje gemaakt)
+- Bastiaan: type could be more general warning (heel moeilijk)
+- $main = putStr (show main) (toplevelTypes wordt dan onnodig in code generator)
+- XML uitvoer van errors en warnings t.b.v. interpreter
+- clashes with HeliumLang ==> clash with built-in (MANUAL)
+	bijvoorbeeld showUnit of data Unit = ... proberen te definieren
+- :t in geval van typeringsfout
+- compilerondersteuning voor interpreter (expressie uitrekenen, type bepalen)
+
+LIBRARIES
+- show implementeren met shows, ShowS; efficienter
+- read functies voor andere types dan Int
+
+HINT
+- Hint op Linux & Mac (springen naar regelnummers) (*)
+- Hint in wxHaskell (Arie, Daan)
+- functies definieren? 
+- paden via command-line
+- meer features zoals springen naar definitie van functie, documentatie etc...
+- :l test.hs  slechte foutmelding over module naam die uppercase moet
+
+LVM
+- nieuwe core syntax
+- nieuwe directory structuur: coreasm - runtime
+- standaard libraries bij runtime (gedeeld met helium)
+- IORef
+- 1 callback voor wx
+- WX integratie simpel: alleen soegraphics
+- Garbage collector bug
+- Coreasm en module systeem
+
+DOCUMENTATIE
+- List en Maybe
+- tutorial
+- fouten/warnings/hints uitleggen adhv voorbeeldje

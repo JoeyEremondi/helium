@@ -1,0 +1,15 @@
+Compiling typeerrors/Examples/NestedInfiniteType.hs
+(5,1): Type error in explicitly typed binding
+ definition       : f
+   inferred type  : b   -> [b] -> [b]
+   declared type  : [a] -> [a] -> [a]
+ because          : unification would give infinite type
+
+(8,23): Type error in application
+ expression       : f a xs
+ term             : f
+   type           : [a] -> [a] -> [a]
+   does not match : b   -> [b] -> [b]
+ because          : unification would give infinite type
+
+Compilation failed with 2 errors
