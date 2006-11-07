@@ -1,0 +1,8 @@
+Compiling typeerrors/Heuristics/NewNegationSimilar.hs
+(5,9): Type error in negation
+ expression       : -.3
+ operator         : -.
+   type           : Float -> Float
+   does not match : Int   -> Int  
+
+Compilation failed with 1 error

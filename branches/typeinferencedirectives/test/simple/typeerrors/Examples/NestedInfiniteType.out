@@ -1,0 +1,20 @@
+Compiling typeerrors/Examples/NestedInfiniteType.hs
+(5,14): Type error in right-hand side
+ expression       : [a]
+   type           : [[Int]]
+   does not match : [Int  ]
+
+(6,3): Type error in pattern of function binding
+ pattern          : a
+   type           : Int  
+   does not match : [Int]
+
+(8,25): Type error in application
+ expression       : f a xs
+ function         : f
+   type           : [a] -> [a] -> [a]
+ 1st argument     : a
+   type           : Int
+   does not match : [a]
+
+Compilation failed with 3 errors
