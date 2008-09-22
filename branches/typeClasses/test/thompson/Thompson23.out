@@ -1,0 +1,9 @@
+Compiling thompson/Thompson23.hs
+(1,1): Missing class constraint in type signature
+ function         : empty
+   declared type  : [a] -> Bool
+ class constraint : Eq a
+   arising from   : ==
+ hint             : add the class constraint to the type signature
+
+Compilation failed with 1 error

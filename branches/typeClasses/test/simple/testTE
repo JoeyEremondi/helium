@@ -1,0 +1,9 @@
+#!/bin/sh
+
+ERRORS=0
+
+for f in typeerrors/Edinburgh/*.hs  ; do bash testOne ${f%.hs}; ERRORS=$[$ERRORS+$?] ; done
+for f in typeerrors/Examples/*.hs   ; do bash testOne ${f%.hs}; ERRORS=$[$ERRORS+$?] ; done
+for f in typeerrors/Heuristics/*.hs ; do bash testOne ${f%.hs}; ERRORS=$[$ERRORS+$?] ; done
+
+exit $ERRORS
