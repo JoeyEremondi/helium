@@ -1,0 +1,4 @@
+Compiling correct/Daan.hs
+Compilation successful
+KNOWN BUG: lvmrun does not cleanly detect out of memory here.
+

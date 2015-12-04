@@ -1,0 +1,7 @@
+#!/bin/sh
+
+ERRORS=0
+
+for f in runtimeerrors/*.hs          ; do bash testOne ${f%.hs}; ERRORS=$[$ERRORS+$?] ; done
+
+exit $ERRORS

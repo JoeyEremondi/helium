@@ -1,0 +1,8 @@
+Compiling typeerrors/Examples/NewNegationExpr.hs
+(5,10): Type error in negation
+ expression       : -.True
+ operator         : -.
+   type           : Float -> Float
+   does not match : Bool  -> Bool 
+
+Compilation failed with 1 error
